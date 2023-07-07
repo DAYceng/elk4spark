@@ -1,0 +1,18 @@
+filebeat.inputs:
+  - type: log
+    paths: 
+      - "/usr/share/filebeat/input_files/**"
+    enabled: true
+    exclude_files: ['\.md$']
+
+filebeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+output.logstash:
+  hosts: ["elksj-logstash:5044"]
+
+# Use this if you'd like to output logs directly to elasticsearch
+#output.elasticsearch:
+#  hosts: ["elksj-elasticsearch:9200"]

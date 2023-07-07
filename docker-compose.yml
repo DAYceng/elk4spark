@@ -1,0 +1,111 @@
+version: '3.4'
+services:
+  kafka:
+    container_name: elksj-kafka
+    image: elksj-kafka:latest
+    build: kafka/.
+    volumes:
+      - ./kafka/server.properties_template:/opt/kafka/config/server.properties_template
+      - ./kafka/entrypoint.sh:/entrypoint/entrypoint.sh
+    depends_on:
+      - "zookeeper"
+    restart: always
+    ports:
+      - "9092:9092"
+    networks:
+      - elastinet
+      
+  zookeeper:
+    container_name: elksj-zookeeper
+    image: elksj-zookeeper:latest
+    build: zookeeper/.
+    depends_on:
+      - "logstash"
+    restart: always
+    ports:
+      - "2181:2181"
+    networks:
+      - elastinet
+
+  filebeat:
+    container_name: elksj-filebeat
+    image: elksj-filebeat:7.2.0
+    build: filebeat/.
+    volumes:
+      - ./filebeat/input_files:/usr/share/filebeat/input_files
+      - ./filebeat/filebeat_data:/usr/share/filebeat/data
+    depends_on:
+      - "logstash"
+    restart: always
+    networks:
+      - elastinet
+
+  logstash:
+    container_name: elksj-logstash
+    image: elksj-logstash:7.1.1
+    build: logstash/.
+    volumes:
+      - ./logstash/pipelines:/usr/share/logstash/pipeline/
+    depends_on:
+      - "kibana"
+    restart: always
+    networks:
+      - elastinet
+  
+  elasticsearch:
+    container_name: elksj-elasticsearch
+    image: elksj-elasticsearch:7.1.1
+    build: elasticsearch/.
+    environment:
+    - discovery.type=single-node
+    volumes: 
+      - ./elasticsearch/esdata:/usr/share/elasticsearch/data
+      - ./elasticsearch/scripts:/usr/share/elasticsearch/scripts
+      - ./elasticsearch/output_templates:/usr/share/output_templates
+    entrypoint: /usr/share/elasticsearch/scripts/es_entrypoint.sh
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elastinet
+  
+  kibana:
+    container_name: elksj-kibana
+    image: elksj-kibana:7.1.1
+    build: kibana/.
+    restart: always
+    depends_on: 
+      - "elasticsearch"
+    ports:
+      - "5601:5601"
+    networks:
+      - elastinet
+
+  jupyter:
+    container_name: elksj-jupyter
+    image: elksj-jupyter/all-spark-notebook
+    build: jupyter/.
+    restart: always
+    depends_on:
+      - "elasticsearch"
+    ports:
+     - "8888:8888"
+    deploy:
+            resources:
+                reservations:
+                    devices:
+                      - device_ids: ["1"]
+                        capabilities: ["gpu"]
+                        driver: "nvidia"
+    volumes:
+      - ./jupyter/notebooks:/home/jovyan/work
+    networks:
+      - elastinet
+
+
+    entrypoint: start.sh jupyter lab --NotebookApp.password='sha1:3917f51524d2:6f7e47e0400fba037c46e2a6a8801b62dc54d920' # password is 'net-research'
+
+networks:
+  elastinet:
+
