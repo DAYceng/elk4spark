@@ -2,7 +2,8 @@
 
 #### 介绍
 
-![20220330164416](D:\zpg\秋招\GitHub整理\elk4spark-main\img\20220330164416.png)
+![image](https://github.com/DAYceng/elk4spark/assets/39471587/efaff0ff-4eb1-4ddb-aa24-0eb292728163)
+
 
 #### 首次安装平台步骤
 
